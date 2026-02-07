@@ -29,16 +29,20 @@ export default function ExpenseForm() {
         <label>
           Enter Your amount
           <input type="text" value={amount} />
+        </label>{" "}
+        <br></br>
+        <label>
+          Category:
+          <select>
+            <option>{category[0]}</option>
+            <option>{category[1]}</option>
+            <option>{category[2]}</option>
+            <option>{category[3]}</option>
+            <option>{category[4]}</option>
+            <option>{category[5]}</option>
+            <option>{category[6]}</option>
+          </select>
         </label>
-        <select>
-          <option>{category[0]}</option>
-          <option>{category[1]}</option>
-          <option>{category[2]}</option>
-          <option>{category[3]}</option>
-          <option>{category[4]}</option>
-          <option>{category[5]}</option>
-          <option>{category[6]}</option>
-        </select>
       </form>
     </>
   );
