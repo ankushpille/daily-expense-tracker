@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function ExpenseForm() {
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(0);
   const [category, setCategory] = useState([
     "food",
     "petrol",
@@ -23,5 +23,23 @@ export default function ExpenseForm() {
     "others",
   ]);
 
-  return <></>;
+  return (
+    <>
+      <form>
+        <label>
+          Enter Your amount
+          <input type="text" value={amount} />
+        </label>
+        <select>
+          <option>{category[0]}</option>
+          <option>{category[1]}</option>
+          <option>{category[2]}</option>
+          <option>{category[3]}</option>
+          <option>{category[4]}</option>
+          <option>{category[5]}</option>
+          <option>{category[6]}</option>
+        </select>
+      </form>
+    </>
+  );
 }
