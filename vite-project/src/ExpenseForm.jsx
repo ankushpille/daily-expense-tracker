@@ -48,6 +48,23 @@ export default function ExpenseForm() {
           Enter your date:
           <input type="date" value={date} />
         </label>
+        <br />
+        <label>
+          description:
+          <input type="text" value={description} />
+        </label>
+        <br />
+        <label>
+          Select payement mode:
+          <select>
+            <option>{payementMode[0]}</option>
+            <option>{payementMode[1]}</option>
+            <option>{payementMode[2]}</option>
+            <option>{payementMode[3]}</option>
+            <option>{payementMode[4]}</option>
+            <option>{payementMode[5]}</option>
+          </select>
+        </label>
       </form>
     </>
   );
