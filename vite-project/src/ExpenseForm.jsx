@@ -42,6 +42,11 @@ export default function ExpenseForm() {
             <option>{category[5]}</option>
             <option>{category[6]}</option>
           </select>
+        </label>{" "}
+        <br />
+        <label>
+          Enter your date:
+          <input type="date" value={date} />
         </label>
       </form>
     </>
