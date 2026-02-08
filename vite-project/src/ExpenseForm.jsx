@@ -34,7 +34,7 @@ export default function ExpenseForm() {
     <>
       <form onSubmit={handleSubmit}>
         <label>
-          Enter Your amount
+          Enter Your amount:
           <input type="text" value={amount} onChange={handleAmountOnChange} />
         </label>{" "}
         <br></br>
