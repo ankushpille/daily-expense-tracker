@@ -19,9 +19,9 @@ const PAYMENT_MODES = [
   "Cash",
   "Debit Card",
   "Credit Card",
+  "UPI",
   "Bank Transfer",
-  "PayPal",
-  "Venmo",
+  "Wallet",
   "Other",
 ];
 
@@ -33,9 +33,9 @@ const createId = () => {
 };
 
 const formatCurrency = (value) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
     maximumFractionDigits: 2,
   }).format(value);
 
@@ -162,7 +162,7 @@ function App() {
       <header className="hero">
         <div>
           <p className="eyebrow">Daily Expense Tracker</p>
-          <h1>Track every dollar, see the story.</h1>
+          <h1>Track every rupee, see the story.</h1>
           <p className="subtitle">
             Log expenses, filter by day, and spot where money really goes.
           </p>
