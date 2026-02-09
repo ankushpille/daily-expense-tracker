@@ -1,0 +1,12 @@
+{
+  "name": "daily-expense-tracker-root",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm --prefix vite-project run dev",
+    "build": "npm --prefix vite-project run build",
+    "preview": "npm --prefix vite-project run preview",
+    "lint": "npm --prefix vite-project run lint",
+    "postinstall": "npm --prefix vite-project install"
+  }
+}
