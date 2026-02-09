@@ -157,7 +157,7 @@
 
 .expense-row {
   display: grid;
-  grid-template-columns: 120px 120px 140px 120px minmax(120px, 1fr) 90px;
+  grid-template-columns: 120px 140px 140px 120px minmax(120px, 1fr) 90px;
   gap: 12px;
   align-items: center;
   padding: 12px 16px;
@@ -172,6 +172,11 @@
   font-size: 0.75rem;
   color: #6b4b32;
   letter-spacing: 0.08em;
+}
+
+.expense-table .expense-row:not(.expense-head):nth-child(even),
+.report-table .report-row:not(.report-head):nth-child(even) {
+  background: rgba(255, 252, 247, 0.9);
 }
 
 .align-right {
@@ -215,6 +220,30 @@
   font-weight: 600;
 }
 
+.report-table {
+  display: grid;
+  gap: 12px;
+}
+
+.report-row {
+  display: grid;
+  grid-template-columns: 120px 140px 140px 140px 1fr 1fr 140px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(248, 240, 228, 0.7);
+}
+
+.report-head {
+  background: transparent;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #6b4b32;
+  letter-spacing: 0.08em;
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -244,6 +273,15 @@
   }
 
   .expense-head {
+    display: none;
+  }
+
+  .report-row {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    row-gap: 6px;
+  }
+
+  .report-head {
     display: none;
   }
 }

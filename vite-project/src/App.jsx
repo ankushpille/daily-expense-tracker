@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import ExpenseForm from "./ExpenseForm";
+import IncomeForm from "./IncomeForm";
 import "./App.css";
 
-const STORAGE_KEY = "daily-expense-tracker.v1";
+const STORAGE_KEY_EXPENSES = "daily-expense-tracker.expenses.v1";
+const STORAGE_KEY_INCOME = "daily-expense-tracker.income.v1";
 
 const CATEGORIES = [
   "Food",
@@ -12,6 +14,7 @@ const CATEGORIES = [
   "Bills",
   "Subscriptions",
   "Health",
+  "Groceries",
   "Others",
 ];
 
@@ -25,12 +28,24 @@ const PAYMENT_MODES = [
   "Other",
 ];
 
+const INCOME_SOURCES = [
+  "Salary",
+  "Freelance",
+  "Business",
+  "Investment",
+  "Gift",
+  "Refund",
+  "Other",
+];
+
 const createId = () => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
+
+const todayString = () => new Date().toISOString().split("T")[0];
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -39,11 +54,18 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 2,
   }).format(value);
 
-const parseStoredExpenses = () => {
+const monthLabel = (monthKey) => {
+  if (!monthKey) return "";
+  const [year, month] = monthKey.split("-");
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleString("en-IN", { month: "long", year: "numeric" });
+};
+
+const parseStoredItems = (storageKey) => {
   if (typeof localStorage === "undefined") {
     return [];
   }
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(storageKey);
   if (!raw) {
     return [];
   }
@@ -59,7 +81,13 @@ const parseStoredExpenses = () => {
 };
 
 function App() {
-  const [expenses, setExpenses] = useState(() => parseStoredExpenses());
+  const [expenses, setExpenses] = useState(() =>
+    parseStoredItems(STORAGE_KEY_EXPENSES),
+  );
+  const [income, setIncome] = useState(() =>
+    parseStoredItems(STORAGE_KEY_INCOME),
+  );
+  const [dailyReportDate, setDailyReportDate] = useState(todayString());
   const [filters, setFilters] = useState({
     query: "",
     category: "",
@@ -73,8 +101,15 @@ function App() {
     if (typeof localStorage === "undefined") {
       return;
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(expenses));
   }, [expenses]);
+
+  useEffect(() => {
+    if (typeof localStorage === "undefined") {
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY_INCOME, JSON.stringify(income));
+  }, [income]);
 
   const filteredExpenses = useMemo(() => {
     const normalizedQuery = filters.query.trim().toLowerCase();
@@ -83,7 +118,10 @@ function App() {
         if (filters.category && expense.category !== filters.category) {
           return false;
         }
-        if (filters.paymentMode && expense.paymentMode !== filters.paymentMode) {
+        if (
+          filters.paymentMode &&
+          expense.paymentMode !== filters.paymentMode
+        ) {
           return false;
         }
         if (filters.fromDate && expense.date < filters.fromDate) {
@@ -95,9 +133,10 @@ function App() {
         if (!normalizedQuery) {
           return true;
         }
-        const haystack = `${expense.description} ${expense.category} ${expense.paymentMode}`
-          .toLowerCase()
-          .trim();
+        const haystack =
+          `${expense.description} ${expense.category} ${expense.paymentMode}`
+            .toLowerCase()
+            .trim();
         return haystack.includes(normalizedQuery);
       })
       .sort((a, b) => {
@@ -119,10 +158,21 @@ function App() {
     [expenses],
   );
 
+  const totalIncomeAllTime = useMemo(
+    () => income.reduce((sum, entry) => sum + entry.amount, 0),
+    [income],
+  );
+
   const totalFiltered = useMemo(
     () => filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0),
     [filteredExpenses],
   );
+
+  const dailyExpenseTotal = useMemo(() => {
+    return expenses
+      .filter((expense) => expense.date === dailyReportDate)
+      .reduce((sum, expense) => sum + expense.amount, 0);
+  }, [expenses, dailyReportDate]);
 
   const categoryTotals = useMemo(() => {
     return filteredExpenses.reduce((totals, expense) => {
@@ -133,15 +183,123 @@ function App() {
     }, {});
   }, [filteredExpenses]);
 
+  const topCategory = useMemo(() => {
+    let top = { name: "", amount: 0 };
+    Object.entries(categoryTotals).forEach(([name, amount]) => {
+      if (amount > top.amount) {
+        top = { name, amount };
+      }
+    });
+    return top;
+  }, [categoryTotals]);
+
+  const incomeSourceTotals = useMemo(() => {
+    return income.reduce((totals, entry) => {
+      const nextTotals = { ...totals };
+      nextTotals[entry.source] = (nextTotals[entry.source] || 0) + entry.amount;
+      return nextTotals;
+    }, {});
+  }, [income]);
+
+  const topIncomeSource = useMemo(() => {
+    let top = { name: "", amount: 0 };
+    Object.entries(incomeSourceTotals).forEach(([name, amount]) => {
+      if (amount > top.amount) {
+        top = { name, amount };
+      }
+    });
+    return top;
+  }, [incomeSourceTotals]);
+
+  const monthlyReports = useMemo(() => {
+    const monthSet = new Set();
+    expenses.forEach((expense) => monthSet.add(expense.date.slice(0, 7)));
+    income.forEach((entry) => monthSet.add(entry.date.slice(0, 7)));
+    const months = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
+
+    return months.map((monthKey) => {
+      const expensesInMonth = expenses.filter((expense) =>
+        expense.date.startsWith(monthKey),
+      );
+      const incomeInMonth = income.filter((entry) =>
+        entry.date.startsWith(monthKey),
+      );
+      const totalExpense = expensesInMonth.reduce(
+        (sum, expense) => sum + expense.amount,
+        0,
+      );
+      const totalIncome = incomeInMonth.reduce(
+        (sum, entry) => sum + entry.amount,
+        0,
+      );
+      const categoryTotalsInMonth = expensesInMonth.reduce(
+        (totals, expense) => {
+          const nextTotals = { ...totals };
+          nextTotals[expense.category] =
+            (nextTotals[expense.category] || 0) + expense.amount;
+          return nextTotals;
+        },
+        {},
+      );
+      const incomeTotalsInMonth = incomeInMonth.reduce((totals, entry) => {
+        const nextTotals = { ...totals };
+        nextTotals[entry.source] =
+          (nextTotals[entry.source] || 0) + entry.amount;
+        return nextTotals;
+      }, {});
+      let topCategoryInMonth = "";
+      let topCategoryAmount = 0;
+      Object.entries(categoryTotalsInMonth).forEach(([name, amount]) => {
+        if (amount > topCategoryAmount) {
+          topCategoryInMonth = name;
+          topCategoryAmount = amount;
+        }
+      });
+      let topSourceInMonth = "";
+      let topSourceAmount = 0;
+      Object.entries(incomeTotalsInMonth).forEach(([name, amount]) => {
+        if (amount > topSourceAmount) {
+          topSourceInMonth = name;
+          topSourceAmount = amount;
+        }
+      });
+      return {
+        monthKey,
+        totalExpense,
+        totalIncome,
+        savings: totalIncome - totalExpense,
+        topCategory: topCategoryInMonth || "--",
+        topCategoryAmount,
+        topSource: topSourceInMonth || "--",
+        topSourceAmount,
+      };
+    });
+  }, [expenses, income]);
+
+  const monthWithHighestSpend = useMemo(() => {
+    let top = { monthKey: "", totalExpense: 0 };
+    monthlyReports.forEach((report) => {
+      if (report.totalExpense > top.totalExpense) {
+        top = { monthKey: report.monthKey, totalExpense: report.totalExpense };
+      }
+    });
+    return top;
+  }, [monthlyReports]);
+
   const handleAddExpense = (expense) => {
-    setExpenses((prev) => [
-      { ...expense, id: createId() },
-      ...prev,
-    ]);
+    setExpenses((prev) => [{ ...expense, id: createId() }, ...prev]);
+  };
+
+  const handleAddIncome = (entry) => {
+    setIncome((prev) => [{ ...entry, id: createId() }, ...prev]);
   };
 
   const handleDeleteExpense = (id) => {
     setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+  };
+
+  const handleDeleteIncome = (id) => {
+    setIncome((prev) => prev.filter((entry) => entry.id !== id));
   };
 
   const handleClearAll = () => {
@@ -151,6 +309,134 @@ function App() {
     if (shouldClear) {
       setExpenses([]);
     }
+  };
+
+  const handleClearIncome = () => {
+    const shouldClear = window.confirm(
+      "Remove all income entries? This cannot be undone.",
+    );
+    if (shouldClear) {
+      setIncome([]);
+    }
+  };
+
+  const handleDownloadMonthlyPdf = (report) => {
+    const printable = `
+      <html>
+        <head>
+          <title>Monthly Report - ${monthLabel(report.monthKey)}</title>
+          <style>
+            body { font-family: "Segoe UI", Arial, sans-serif; padding: 24px; color: #2b231c; }
+            h1 { margin: 0 0 8px; }
+            .muted { color: #6b5446; margin-bottom: 16px; }
+            .grid { display: grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); gap: 12px; }
+            .card { border: 1px solid #e3d7c9; border-radius: 12px; padding: 12px; }
+            .section { margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+            th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+            th { text-transform: uppercase; font-size: 11px; letter-spacing: 0.08em; color: #6b5446; }
+          </style>
+        </head>
+        <body>
+          <h1>Monthly Report</h1>
+          <div class="muted">${monthLabel(report.monthKey)} (${report.monthKey})</div>
+          <div class="grid">
+            <div class="card">
+              <div>Total Income</div>
+              <strong>${formatCurrency(report.totalIncome)}</strong>
+            </div>
+            <div class="card">
+              <div>Total Expense</div>
+              <strong>${formatCurrency(report.totalExpense)}</strong>
+            </div>
+            <div class="card">
+              <div>Savings</div>
+              <strong>${formatCurrency(report.savings)}</strong>
+            </div>
+            <div class="card">
+              <div>Top Category</div>
+              <strong>${report.topCategory} (${formatCurrency(
+                report.topCategoryAmount,
+              )})</strong>
+            </div>
+            <div class="card">
+              <div>Top Income Source</div>
+              <strong>${report.topSource} (${formatCurrency(
+                report.topSourceAmount,
+              )})</strong>
+            </div>
+          </div>
+          <div class="section">
+            <h2>Expenses</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Payment</th>
+                  <th>Amount</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${expenses
+                  .filter((expense) => expense.date.startsWith(report.monthKey))
+                  .map(
+                    (expense) => `
+                  <tr>
+                    <td>${expense.date}</td>
+                    <td>${expense.category}</td>
+                    <td>${expense.paymentMode}</td>
+                    <td>${formatCurrency(expense.amount)}</td>
+                    <td>${expense.description || "--"}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+          <div class="section">
+            <h2>Income</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Source</th>
+                  <th>Amount</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${income
+                  .filter((entry) => entry.date.startsWith(report.monthKey))
+                  .map(
+                    (entry) => `
+                  <tr>
+                    <td>${entry.date}</td>
+                    <td>${entry.source}</td>
+                    <td>${formatCurrency(entry.amount)}</td>
+                    <td>${entry.note || "--"}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const reportWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!reportWindow) {
+      window.alert("Popup blocked. Please allow popups to download the PDF.");
+      return;
+    }
+    reportWindow.document.write(printable);
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
   };
 
   const updateFilter = (field, value) => {
@@ -170,7 +456,12 @@ function App() {
         <div className="hero-card">
           <p>Total spent (filtered)</p>
           <h2>{formatCurrency(totalFiltered)}</h2>
-          <span>All time: {formatCurrency(totalAllTime)}</span>
+          <span>All time expense: {formatCurrency(totalAllTime)}</span>
+          <span>Total income: {formatCurrency(totalIncomeAllTime)}</span>
+          <span>
+            Remaining income:{" "}
+            {formatCurrency(totalIncomeAllTime - totalAllTime)}
+          </span>
         </div>
       </header>
 
@@ -181,6 +472,38 @@ function App() {
           categories={CATEGORIES}
           paymentModes={PAYMENT_MODES}
         />
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <h3>Add income</h3>
+          <button
+            className="ghost-btn"
+            type="button"
+            onClick={handleClearIncome}
+          >
+            Clear income
+          </button>
+        </div>
+        <IncomeForm onAdd={handleAddIncome} incomeSources={INCOME_SOURCES} />
+      </section>
+
+      <section className="panel">
+        <h3>Daily total</h3>
+        <div className="filters">
+          <label className="field">
+            <span>Pick a date</span>
+            <input
+              type="date"
+              value={dailyReportDate}
+              onChange={(event) => setDailyReportDate(event.target.value)}
+            />
+          </label>
+          <div className="summary-card">
+            <span>Expenses on {dailyReportDate}</span>
+            <strong>{formatCurrency(dailyExpenseTotal)}</strong>
+          </div>
+        </div>
       </section>
 
       <section className="panel">
@@ -264,9 +587,7 @@ function App() {
       <section className="panel">
         <div className="panel-header">
           <h3>Recent expenses</h3>
-          <span className="muted">
-            {filteredExpenses.length} items
-          </span>
+          <span className="muted">{filteredExpenses.length} items</span>
         </div>
         {filteredExpenses.length === 0 ? (
           <p className="empty-state">
@@ -290,12 +611,51 @@ function App() {
                 <span className="align-right">
                   {formatCurrency(expense.amount)}
                 </span>
-                <span>{expense.description || "—"}</span>
+                <span>{expense.description || "--"}</span>
                 <span className="align-right">
                   <button
                     className="danger-btn"
                     type="button"
                     onClick={() => handleDeleteExpense(expense.id)}
+                  >
+                    Delete
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <h3>Income entries</h3>
+          <span className="muted">{income.length} items</span>
+        </div>
+        {income.length === 0 ? (
+          <p className="empty-state">Add income to see sources and savings.</p>
+        ) : (
+          <div className="expense-table">
+            <div className="expense-row expense-head">
+              <span>Date</span>
+              <span>Source</span>
+              <span className="align-right">Amount</span>
+              <span>Note</span>
+              <span className="align-right">Action</span>
+            </div>
+            {income.map((entry) => (
+              <div className="expense-row" key={entry.id}>
+                <span>{entry.date}</span>
+                <span>{entry.source}</span>
+                <span className="align-right">
+                  {formatCurrency(entry.amount)}
+                </span>
+                <span>{entry.note || "--"}</span>
+                <span className="align-right">
+                  <button
+                    className="danger-btn"
+                    type="button"
+                    onClick={() => handleDeleteIncome(entry.id)}
                   >
                     Delete
                   </button>
@@ -320,6 +680,120 @@ function App() {
             ))
           )}
         </div>
+      </section>
+
+      <section className="panel summary">
+        <h3>Insights</h3>
+        <div className="summary-grid">
+          <div className="summary-card">
+            <span>Top spending category</span>
+            <strong>
+              {topCategory.name
+                ? `${topCategory.name} (${formatCurrency(topCategory.amount)})`
+                : "--"}
+            </strong>
+          </div>
+          <div className="summary-card">
+            <span>Top income source</span>
+            <strong>
+              {topIncomeSource.name
+                ? `${topIncomeSource.name} (${formatCurrency(
+                    topIncomeSource.amount,
+                  )})`
+                : "--"}
+            </strong>
+          </div>
+          <div className="summary-card">
+            <span>Lifetime savings</span>
+            <strong>{formatCurrency(totalIncomeAllTime - totalAllTime)}</strong>
+          </div>
+          <div className="summary-card">
+            <span>Highest spend month</span>
+            <strong>
+              {monthWithHighestSpend.monthKey
+                ? `${monthWithHighestSpend.monthKey} (${formatCurrency(
+                    monthWithHighestSpend.totalExpense,
+                  )})`
+                : "--"}
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel">
+        <h3>Income sources</h3>
+        <div className="summary-grid">
+          {Object.keys(incomeSourceTotals).length === 0 ? (
+            <p className="empty-state">Add income to see sources.</p>
+          ) : (
+            Object.entries(incomeSourceTotals).map(([source, amount]) => (
+              <div className="summary-card" key={source}>
+                <span>{source}</span>
+                <strong>{formatCurrency(amount)}</strong>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="panel">
+        <h3>Monthly report</h3>
+        {monthlyReports.length === 0 ? (
+          <p className="empty-state">
+            Add expenses and income to build monthly reports.
+          </p>
+        ) : (
+          <div className="report-table">
+            <div className="report-row report-head">
+              <span>Month</span>
+              <span className="align-right">Income</span>
+              <span className="align-right">Expenses</span>
+              <span className="align-right">Remaining</span>
+              <span>Top expense</span>
+              <span>Top income</span>
+              <span className="align-right">PDF</span>
+            </div>
+            {monthlyReports.map((report) => (
+              <div className="report-row" key={report.monthKey}>
+                <span>
+                  {monthLabel(report.monthKey)} ({report.monthKey})
+                </span>
+                <span className="align-right">
+                  {formatCurrency(report.totalIncome)}
+                </span>
+                <span className="align-right">
+                  {formatCurrency(report.totalExpense)}
+                </span>
+                <span className="align-right">
+                  {formatCurrency(report.savings)}
+                </span>
+                <span>
+                  {report.topCategory === "--"
+                    ? "--"
+                    : `${report.topCategory} (${formatCurrency(
+                        report.topCategoryAmount,
+                      )})`}
+                </span>
+                <span>
+                  {report.topSource === "--"
+                    ? "--"
+                    : `${report.topSource} (${formatCurrency(
+                        report.topSourceAmount,
+                      )})`}
+                </span>
+                <span className="align-right">
+                  <button
+                    className="ghost-btn"
+                    type="button"
+                    onClick={() => handleDownloadMonthlyPdf(report)}
+                  >
+                    Download PDF
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
