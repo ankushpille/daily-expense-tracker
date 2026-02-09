@@ -1,85 +1,132 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-export default function ExpenseForm() {
+const todayString = () => new Date().toISOString().split("T")[0];
+
+export default function ExpenseForm({ onAdd, categories, paymentModes }) {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(todayString());
   const [description, setDescription] = useState("");
-  const [payementMode, setPayementMode] = useState("");
+  const [paymentMode, setPaymentMode] = useState("");
+  const [error, setError] = useState("");
 
-  const handleAmountOnChange = (e) => {
-    setAmount(e.target.value);
+  const canSubmit = useMemo(() => {
+    const parsedAmount = Number.parseFloat(amount);
+    return (
+      Number.isFinite(parsedAmount) &&
+      parsedAmount > 0 &&
+      category &&
+      paymentMode &&
+      date
+    );
+  }, [amount, category, paymentMode, date]);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const parsedAmount = Number.parseFloat(amount);
+
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError("Enter a valid amount greater than 0.");
+      return;
+    }
+    if (!category) {
+      setError("Pick a category.");
+      return;
+    }
+    if (!paymentMode) {
+      setError("Pick a payment mode.");
+      return;
+    }
+    if (!date) {
+      setError("Pick a date.");
+      return;
+    }
+
+    setError("");
+    onAdd({
+      amount: parsedAmount,
+      category,
+      date,
+      description: description.trim(),
+      paymentMode,
+    });
+
+    setAmount("");
+    setCategory("");
+    setDate(todayString());
+    setDescription("");
+    setPaymentMode("");
   };
 
-  const handleDescriptionChange = (e) => {
-    setDescription(e.target.value);
-  };
-
-  const handleDateChange = (e) => {
-    setDate(e.target.value);
-  };
-
-  const handleCategoryOnChange = (e) => {
-    setCategory(e.target.value);
-  };
-
-  const handlePayementChange = (e) => {
-    setPayementMode(e.target.value);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-  };
   return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Enter Your amount:
-          <input type="text" value={amount} onChange={handleAmountOnChange} />
-        </label>{" "}
-        <br></br>
-        <label>
-          Category:
-          <select value={category} onChange={handleCategoryOnChange}>
-            <option value="">Select Category</option>
-            <option value="Food">Food</option>
-            <option value="Travel">Travel</option>
-            <option value="Rent">Rent</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Bills">Bills</option>
-            <option value="Others">Others</option>
-          </select>
-        </label>{" "}
-        <br />
-        <label>
-          Enter your date:
-          <input type="date" value={date} onChange={handleDateChange} />
-        </label>
-        <br />
-        <label>
-          description:
+    <form className="expense-form" onSubmit={handleSubmit}>
+      <div className="form-grid">
+        <label className="field">
+          <span>Amount</span>
           <input
-            type="text"
-            value={description}
-            onChange={handleDescriptionChange}
+            type="number"
+            inputMode="decimal"
+            min="0.01"
+            step="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            required
           />
         </label>
-        <br />
-        <label>
-          Select payement mode:
-          <select value={payementMode} onChange={handlePayementChange}>
-            <option value="payement type">payement type</option>
-            <option value="phonepe">Phonepe</option>
-            <option value="gpay">gpay</option>
-            <option value="paytym">paytym</option>
-            <option value="creditcard">creditcard</option>
-            <option value="debitcard">debitcard</option>
-            <option value="others">others</option>
+        <label className="field">
+          <span>Category</span>
+          <select
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            required
+          >
+            <option value="">Select category</option>
+            {categories.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
           </select>
         </label>
-        <br />
-        <button type="submit">Add expense</button>
-      </form>
-    </>
+        <label className="field">
+          <span>Date</span>
+          <input
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            required
+          />
+        </label>
+        <label className="field">
+          <span>Payment mode</span>
+          <select
+            value={paymentMode}
+            onChange={(event) => setPaymentMode(event.target.value)}
+            required
+          >
+            <option value="">Select payment mode</option>
+            {paymentModes.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label className="field field-full">
+        <span>Description</span>
+        <input
+          type="text"
+          placeholder="Add a note (optional)"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+        />
+      </label>
+      {error ? <p className="form-error">{error}</p> : null}
+      <button className="primary-btn" type="submit" disabled={!canSubmit}>
+        Add expense
+      </button>
+    </form>
   );
 }

@@ -1,0 +1,260 @@
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  align-items: center;
+  padding: 28px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 248, 238, 0.95), rgba(248, 225, 194, 0.75));
+  box-shadow: 0 18px 50px rgba(74, 48, 23, 0.12);
+  animation: float-in 0.8s ease-out;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  margin: 0 0 8px;
+  color: #7a4b2a;
+}
+
+.hero h1 {
+  font-family: "Fraunces", serif;
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  margin: 0;
+  color: #4c3a2c;
+  max-width: 420px;
+}
+
+.hero-card {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 22px;
+  border-radius: 18px;
+  border: 1px solid rgba(118, 80, 45, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hero-card h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-family: "Fraunces", serif;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 12px 35px rgba(70, 46, 24, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fade-up 0.6s ease-out;
+}
+
+.panel h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.form-grid,
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #3e3127;
+}
+
+.field input,
+.field select {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(108, 78, 54, 0.2);
+  background: #fffaf3;
+  color: inherit;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid rgba(164, 96, 45, 0.35);
+}
+
+.field-full {
+  width: 100%;
+}
+
+.expense-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.primary-btn,
+.ghost-btn,
+.danger-btn {
+  border-radius: 999px;
+  border: none;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: #3d2b1c;
+  color: #fff6ec;
+  align-self: flex-start;
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px solid rgba(86, 58, 33, 0.35);
+  color: #4a3323;
+}
+
+.danger-btn {
+  background: #f4d4c4;
+  color: #8b2e1c;
+  border: 1px solid rgba(139, 46, 28, 0.3);
+}
+
+.expense-table {
+  display: grid;
+  gap: 12px;
+}
+
+.expense-row {
+  display: grid;
+  grid-template-columns: 120px 120px 140px 120px minmax(120px, 1fr) 90px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(248, 240, 228, 0.7);
+}
+
+.expense-head {
+  background: transparent;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #6b4b32;
+  letter-spacing: 0.08em;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.muted {
+  color: #6b5446;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  margin: 0;
+  color: #6b5446;
+  font-style: italic;
+}
+
+.summary {
+  background: rgba(255, 246, 235, 0.9);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(135, 97, 61, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-error {
+  margin: 0;
+  color: #9a2f20;
+  font-weight: 600;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 860px) {
+  .expense-row {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    row-gap: 6px;
+  }
+
+  .expense-head {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel {
+    padding: 18px;
+  }
+
+  .primary-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
