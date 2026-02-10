@@ -165,6 +165,10 @@
   background: rgba(248, 240, 228, 0.7);
 }
 
+.daily-expense-table .daily-expense-row {
+  grid-template-columns: 140px 140px 120px minmax(140px, 1fr);
+}
+
 .expense-head {
   background: transparent;
   font-weight: 600;

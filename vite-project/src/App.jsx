@@ -80,10 +80,46 @@ const parseStoredItems = (storageKey) => {
   }
 };
 
+const buildSampleExpenses = () => {
+  const today = todayString();
+  return [
+    {
+      id: createId(),
+      date: today,
+      category: "Groceries",
+      paymentMode: "UPI",
+      amount: 420,
+      description: "Vegetables & essentials",
+    },
+    {
+      id: createId(),
+      date: today,
+      category: "Travel",
+      paymentMode: "Debit Card",
+      amount: 160,
+      description: "Metro ride",
+    },
+    {
+      id: createId(),
+      date: today,
+      category: "Food",
+      paymentMode: "Cash",
+      amount: 280,
+      description: "Lunch",
+    },
+  ];
+};
+
+const getInitialExpenses = () => {
+  const stored = parseStoredItems(STORAGE_KEY_EXPENSES);
+  if (stored.length > 0) {
+    return stored;
+  }
+  return buildSampleExpenses();
+};
+
 function App() {
-  const [expenses, setExpenses] = useState(() =>
-    parseStoredItems(STORAGE_KEY_EXPENSES),
-  );
+  const [expenses, setExpenses] = useState(() => getInitialExpenses());
   const [income, setIncome] = useState(() =>
     parseStoredItems(STORAGE_KEY_INCOME),
   );
@@ -172,6 +208,12 @@ function App() {
     return expenses
       .filter((expense) => expense.date === dailyReportDate)
       .reduce((sum, expense) => sum + expense.amount, 0);
+  }, [expenses, dailyReportDate]);
+
+  const dailyExpenses = useMemo(() => {
+    return expenses
+      .filter((expense) => expense.date === dailyReportDate)
+      .sort((a, b) => b.amount - a.amount);
   }, [expenses, dailyReportDate]);
 
   const categoryTotals = useMemo(() => {
@@ -292,10 +334,6 @@ function App() {
 
   const handleAddIncome = (entry) => {
     setIncome((prev) => [{ ...entry, id: createId() }, ...prev]);
-  };
-
-  const handleDeleteExpense = (id) => {
-    setExpenses((prev) => prev.filter((expense) => expense.id !== id));
   };
 
   const handleDeleteIncome = (id) => {
@@ -587,40 +625,29 @@ function App() {
       <section className="panel">
         <div className="panel-header">
           <h3>Recent expenses</h3>
-          <span className="muted">{filteredExpenses.length} items</span>
+          <span className="muted">{dailyExpenses.length} items</span>
         </div>
-        {filteredExpenses.length === 0 ? (
+        {dailyExpenses.length === 0 ? (
           <p className="empty-state">
-            No expenses yet. Add one above to get started.
+            No expenses for {dailyReportDate}. Add one above to get started.
           </p>
         ) : (
-          <div className="expense-table">
-            <div className="expense-row expense-head">
-              <span>Date</span>
+          <div className="expense-table daily-expense-table">
+            <p className="muted">Date: {dailyReportDate}</p>
+            <div className="expense-row daily-expense-row expense-head">
               <span>Category</span>
               <span>Payment</span>
               <span className="align-right">Amount</span>
               <span>Note</span>
-              <span className="align-right">Action</span>
             </div>
-            {filteredExpenses.map((expense) => (
-              <div className="expense-row" key={expense.id}>
-                <span>{expense.date}</span>
+            {dailyExpenses.map((expense) => (
+              <div className="expense-row daily-expense-row" key={expense.id}>
                 <span>{expense.category}</span>
                 <span>{expense.paymentMode}</span>
                 <span className="align-right">
                   {formatCurrency(expense.amount)}
                 </span>
                 <span>{expense.description || "--"}</span>
-                <span className="align-right">
-                  <button
-                    className="danger-btn"
-                    type="button"
-                    onClick={() => handleDeleteExpense(expense.id)}
-                  >
-                    Delete
-                  </button>
-                </span>
               </div>
             ))}
           </div>
