@@ -165,8 +165,21 @@
   background: rgba(248, 240, 228, 0.7);
 }
 
-.daily-expense-table .daily-expense-row {
+.date-expense-table .date-expense-row {
   grid-template-columns: 140px 140px 120px minmax(140px, 1fr);
+}
+
+.date-group {
+  margin-top: 16px;
+}
+
+.date-group:first-child {
+  margin-top: 0;
+}
+
+.date-group-title {
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .expense-head {

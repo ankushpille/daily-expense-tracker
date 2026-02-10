@@ -210,11 +210,23 @@ function App() {
       .reduce((sum, expense) => sum + expense.amount, 0);
   }, [expenses, dailyReportDate]);
 
-  const dailyExpenses = useMemo(() => {
-    return expenses
-      .filter((expense) => expense.date === dailyReportDate)
-      .sort((a, b) => b.amount - a.amount);
-  }, [expenses, dailyReportDate]);
+  const groupedExpenses = useMemo(() => {
+    const sorted = [...expenses].sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date);
+      if (dateCompare !== 0) {
+        return dateCompare;
+      }
+      return b.amount - a.amount;
+    });
+    const groups = new Map();
+    sorted.forEach((expense) => {
+      if (!groups.has(expense.date)) {
+        groups.set(expense.date, []);
+      }
+      groups.get(expense.date).push(expense);
+    });
+    return Array.from(groups, ([date, items]) => ({ date, items }));
+  }, [expenses]);
 
   const categoryTotals = useMemo(() => {
     return filteredExpenses.reduce((totals, expense) => {
@@ -625,29 +637,38 @@ function App() {
       <section className="panel">
         <div className="panel-header">
           <h3>Recent expenses</h3>
-          <span className="muted">{dailyExpenses.length} items</span>
+          <span className="muted">{expenses.length} items</span>
         </div>
-        {dailyExpenses.length === 0 ? (
+        {expenses.length === 0 ? (
           <p className="empty-state">
-            No expenses for {dailyReportDate}. Add one above to get started.
+            No expenses yet. Add one above to get started.
           </p>
         ) : (
-          <div className="expense-table daily-expense-table">
-            <p className="muted">Date: {dailyReportDate}</p>
-            <div className="expense-row daily-expense-row expense-head">
-              <span>Category</span>
-              <span>Payment</span>
-              <span className="align-right">Amount</span>
-              <span>Note</span>
-            </div>
-            {dailyExpenses.map((expense) => (
-              <div className="expense-row daily-expense-row" key={expense.id}>
-                <span>{expense.category}</span>
-                <span>{expense.paymentMode}</span>
-                <span className="align-right">
-                  {formatCurrency(expense.amount)}
-                </span>
-                <span>{expense.description || "--"}</span>
+          <div className="date-groups">
+            {groupedExpenses.map((group) => (
+              <div className="date-group" key={group.date}>
+                <p className="muted date-group-title">Date: {group.date}</p>
+                <div className="expense-table date-expense-table">
+                  <div className="expense-row date-expense-row expense-head">
+                    <span>Category</span>
+                    <span>Payment</span>
+                    <span className="align-right">Amount</span>
+                    <span>Note</span>
+                  </div>
+                  {group.items.map((expense) => (
+                    <div
+                      className="expense-row date-expense-row"
+                      key={expense.id}
+                    >
+                      <span>{expense.category}</span>
+                      <span>{expense.paymentMode}</span>
+                      <span className="align-right">
+                        {formatCurrency(expense.amount)}
+                      </span>
+                      <span>{expense.description || "--"}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
