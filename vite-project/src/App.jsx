@@ -124,6 +124,7 @@ function App() {
     parseStoredItems(STORAGE_KEY_INCOME),
   );
   const [dailyReportDate, setDailyReportDate] = useState(todayString());
+  const [expandedDates, setExpandedDates] = useState(() => new Set());
   const [filters, setFilters] = useState({
     query: "",
     category: "",
@@ -221,11 +222,17 @@ function App() {
     const groups = new Map();
     sorted.forEach((expense) => {
       if (!groups.has(expense.date)) {
-        groups.set(expense.date, []);
+        groups.set(expense.date, { items: [], total: 0 });
       }
-      groups.get(expense.date).push(expense);
+      const group = groups.get(expense.date);
+      group.items.push(expense);
+      group.total += expense.amount;
     });
-    return Array.from(groups, ([date, items]) => ({ date, items }));
+    return Array.from(groups, ([date, data]) => ({
+      date,
+      items: data.items,
+      total: data.total,
+    }));
   }, [expenses]);
 
   const categoryTotals = useMemo(() => {
@@ -493,6 +500,18 @@ function App() {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
+  const toggleDateGroup = (date) => {
+    setExpandedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="app">
       <header className="hero">
@@ -647,28 +666,44 @@ function App() {
           <div className="date-groups">
             {groupedExpenses.map((group) => (
               <div className="date-group" key={group.date}>
-                <p className="muted date-group-title">Date: {group.date}</p>
-                <div className="expense-table date-expense-table">
-                  <div className="expense-row date-expense-row expense-head">
-                    <span>Category</span>
-                    <span>Payment</span>
-                    <span className="align-right">Amount</span>
-                    <span>Note</span>
+                <div className="date-group-header">
+                  <div>
+                    <p className="muted date-group-title">Date: {group.date}</p>
+                    <p className="date-group-total">
+                      Total: {formatCurrency(group.total)}
+                    </p>
                   </div>
-                  {group.items.map((expense) => (
-                    <div
-                      className="expense-row date-expense-row"
-                      key={expense.id}
-                    >
-                      <span>{expense.category}</span>
-                      <span>{expense.paymentMode}</span>
-                      <span className="align-right">
-                        {formatCurrency(expense.amount)}
-                      </span>
-                      <span>{expense.description || "--"}</span>
-                    </div>
-                  ))}
+                  <button
+                    className="ghost-btn"
+                    type="button"
+                    onClick={() => toggleDateGroup(group.date)}
+                  >
+                    {expandedDates.has(group.date) ? "Hide details" : "View details"}
+                  </button>
                 </div>
+                {expandedDates.has(group.date) ? (
+                  <div className="expense-table date-expense-table">
+                    <div className="expense-row date-expense-row expense-head">
+                      <span>Category</span>
+                      <span>Payment</span>
+                      <span className="align-right">Amount</span>
+                      <span>Note</span>
+                    </div>
+                    {group.items.map((expense) => (
+                      <div
+                        className="expense-row date-expense-row"
+                        key={expense.id}
+                      >
+                        <span>{expense.category}</span>
+                        <span>{expense.paymentMode}</span>
+                        <span className="align-right">
+                          {formatCurrency(expense.amount)}
+                        </span>
+                        <span>{expense.description || "--"}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
