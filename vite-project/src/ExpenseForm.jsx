@@ -2,12 +2,25 @@ import { useMemo, useState } from "react";
 
 const todayString = () => new Date().toISOString().split("T")[0];
 
-export default function ExpenseForm({ onAdd, categories, paymentModes }) {
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [date, setDate] = useState(todayString());
-  const [description, setDescription] = useState("");
-  const [paymentMode, setPaymentMode] = useState("");
+export default function ExpenseForm({
+  onAdd,
+  categories,
+  paymentModes,
+  initialValues,
+  submitLabel = "Add expense",
+  onCancel,
+}) {
+  const [amount, setAmount] = useState(
+    initialValues?.amount ? String(initialValues.amount) : "",
+  );
+  const [category, setCategory] = useState(initialValues?.category || "");
+  const [date, setDate] = useState(initialValues?.date || todayString());
+  const [description, setDescription] = useState(
+    initialValues?.description || "",
+  );
+  const [paymentMode, setPaymentMode] = useState(
+    initialValues?.paymentMode || "",
+  );
   const [error, setError] = useState("");
 
   const canSubmit = useMemo(() => {
@@ -50,6 +63,10 @@ export default function ExpenseForm({ onAdd, categories, paymentModes }) {
       description: description.trim(),
       paymentMode,
     });
+
+    if (initialValues) {
+      return;
+    }
 
     setAmount("");
     setCategory("");
@@ -124,9 +141,16 @@ export default function ExpenseForm({ onAdd, categories, paymentModes }) {
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
-      <button className="primary-btn" type="submit" disabled={!canSubmit}>
-        Add expense
-      </button>
+      <div className="form-actions">
+        <button className="primary-btn" type="submit" disabled={!canSubmit}>
+          {submitLabel}
+        </button>
+        {onCancel ? (
+          <button className="ghost-btn" type="button" onClick={onCancel}>
+            Cancel
+          </button>
+        ) : null}
+      </div>
     </form>
   );
 }

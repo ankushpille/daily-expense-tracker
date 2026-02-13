@@ -133,6 +133,7 @@ function App() {
     toDate: "",
     sortBy: "dateDesc",
   });
+  const [expenseBeingEdited, setExpenseBeingEdited] = useState(null);
 
   useEffect(() => {
     if (typeof localStorage === "undefined") {
@@ -192,6 +193,14 @@ function App() {
 
   const totalAllTime = useMemo(
     () => expenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [expenses],
+  );
+
+  const totalSavingsExpenses = useMemo(
+    () =>
+      expenses
+        .filter((expense) => expense.paymentMode !== "Credit Card")
+        .reduce((sum, expense) => sum + expense.amount, 0),
     [expenses],
   );
 
@@ -289,6 +298,9 @@ function App() {
         (sum, expense) => sum + expense.amount,
         0,
       );
+      const savingsExpense = expensesInMonth
+        .filter((expense) => expense.paymentMode !== "Credit Card")
+        .reduce((sum, expense) => sum + expense.amount, 0);
       const totalIncome = incomeInMonth.reduce(
         (sum, entry) => sum + entry.amount,
         0,
@@ -328,7 +340,7 @@ function App() {
         monthKey,
         totalExpense,
         totalIncome,
-        savings: totalIncome - totalExpense,
+        savings: totalIncome - savingsExpense,
         topCategory: topCategoryInMonth || "--",
         topCategoryAmount,
         topSource: topSourceInMonth || "--",
@@ -349,6 +361,24 @@ function App() {
 
   const handleAddExpense = (expense) => {
     setExpenses((prev) => [{ ...expense, id: createId() }, ...prev]);
+  };
+
+  const handleUpdateExpense = (updatedExpense) => {
+    setExpenses((prev) =>
+      prev.map((expense) =>
+        expense.id === expenseBeingEdited.id
+          ? { ...expense, ...updatedExpense }
+          : expense,
+      ),
+    );
+    setExpenseBeingEdited(null);
+  };
+
+  const handleDeleteExpense = (id) => {
+    setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+    if (expenseBeingEdited?.id === id) {
+      setExpenseBeingEdited(null);
+    }
   };
 
   const handleAddIncome = (entry) => {
@@ -529,17 +559,25 @@ function App() {
           <span>Total income: {formatCurrency(totalIncomeAllTime)}</span>
           <span>
             Remaining income:{" "}
-            {formatCurrency(totalIncomeAllTime - totalAllTime)}
+            {formatCurrency(totalIncomeAllTime - totalSavingsExpenses)}
           </span>
         </div>
       </header>
 
       <section className="panel">
-        <h3>Add a new expense</h3>
+        <h3>{expenseBeingEdited ? "Edit expense" : "Add a new expense"}</h3>
         <ExpenseForm
-          onAdd={handleAddExpense}
+          key={expenseBeingEdited?.id || "new-expense"}
+          onAdd={expenseBeingEdited ? handleUpdateExpense : handleAddExpense}
           categories={CATEGORIES}
           paymentModes={PAYMENT_MODES}
+          initialValues={expenseBeingEdited}
+          submitLabel={expenseBeingEdited ? "Update expense" : "Add expense"}
+          onCancel={
+            expenseBeingEdited
+              ? () => setExpenseBeingEdited(null)
+              : undefined
+          }
         />
       </section>
 
@@ -688,6 +726,7 @@ function App() {
                       <span>Payment</span>
                       <span className="align-right">Amount</span>
                       <span>Note</span>
+                      <span className="align-right">Action</span>
                     </div>
                     {group.items.map((expense) => (
                       <div
@@ -700,6 +739,22 @@ function App() {
                           {formatCurrency(expense.amount)}
                         </span>
                         <span>{expense.description || "--"}</span>
+                        <span className="align-right">
+                          <button
+                            className="ghost-btn action-btn"
+                            type="button"
+                            onClick={() => setExpenseBeingEdited(expense)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="danger-btn action-btn"
+                            type="button"
+                            onClick={() => handleDeleteExpense(expense.id)}
+                          >
+                            Delete
+                          </button>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -788,7 +843,9 @@ function App() {
           </div>
           <div className="summary-card">
             <span>Lifetime savings</span>
-            <strong>{formatCurrency(totalIncomeAllTime - totalAllTime)}</strong>
+            <strong>
+              {formatCurrency(totalIncomeAllTime - totalSavingsExpenses)}
+            </strong>
           </div>
           <div className="summary-card">
             <span>Highest spend month</span>
