@@ -204,6 +204,14 @@ function App() {
     [expenses],
   );
 
+  const totalCreditCardExpenseAllTime = useMemo(
+    () =>
+      expenses
+        .filter((expense) => expense.paymentMode === "Credit Card")
+        .reduce((sum, expense) => sum + expense.amount, 0),
+    [expenses],
+  );
+
   const totalIncomeAllTime = useMemo(
     () => income.reduce((sum, entry) => sum + entry.amount, 0),
     [income],
@@ -301,6 +309,9 @@ function App() {
       const savingsExpense = expensesInMonth
         .filter((expense) => expense.paymentMode !== "Credit Card")
         .reduce((sum, expense) => sum + expense.amount, 0);
+      const creditCardExpense = expensesInMonth
+        .filter((expense) => expense.paymentMode === "Credit Card")
+        .reduce((sum, expense) => sum + expense.amount, 0);
       const totalIncome = incomeInMonth.reduce(
         (sum, entry) => sum + entry.amount,
         0,
@@ -341,6 +352,7 @@ function App() {
         totalExpense,
         totalIncome,
         savings: totalIncome - savingsExpense,
+        creditCardExpense,
         topCategory: topCategoryInMonth || "--",
         topCategoryAmount,
         topSource: topSourceInMonth || "--",
@@ -556,6 +568,9 @@ function App() {
           <p>Total spent (filtered)</p>
           <h2>{formatCurrency(totalFiltered)}</h2>
           <span>All time expense: {formatCurrency(totalAllTime)}</span>
+          <span>
+            Credit card used: {formatCurrency(totalCreditCardExpenseAllTime)}
+          </span>
           <span>Total income: {formatCurrency(totalIncomeAllTime)}</span>
           <span>
             Remaining income:{" "}
@@ -888,6 +903,7 @@ function App() {
               <span>Month</span>
               <span className="align-right">Income</span>
               <span className="align-right">Expenses</span>
+              <span className="align-right">Credit Card</span>
               <span className="align-right">Remaining</span>
               <span>Top expense</span>
               <span>Top income</span>
@@ -903,6 +919,9 @@ function App() {
                 </span>
                 <span className="align-right">
                   {formatCurrency(report.totalExpense)}
+                </span>
+                <span className="align-right">
+                  {formatCurrency(report.creditCardExpense)}
                 </span>
                 <span className="align-right">
                   {formatCurrency(report.savings)}
