@@ -2,10 +2,30 @@ import { useMemo, useState } from "react";
 
 const todayString = () => new Date().toISOString().split("T")[0];
 
+const CATEGORIES = [
+  "Food",
+  "Travel",
+  "Rent",
+  "Shopping",
+  "Bills",
+  "Subscriptions",
+  "Health",
+  "Groceries",
+  "Others",
+];
+
+const PAYMENT_MODES = [
+  "Cash",
+  "Debit Card",
+  "Credit Card",
+  "UPI",
+  "Bank Transfer",
+  "Wallet",
+  "Other",
+];
+
 export default function ExpenseForm({
   onAdd,
-  categories,
-  paymentModes,
   initialValues,
   submitLabel = "Add expense",
   onCancel,
@@ -14,31 +34,27 @@ export default function ExpenseForm({
     initialValues?.amount ? String(initialValues.amount) : "",
   );
   const [category, setCategory] = useState(initialValues?.category || "");
-  const [date, setDate] = useState(initialValues?.date || todayString());
-  const [description, setDescription] = useState(
-    initialValues?.description || "",
+  const [date, setDate] = useState(
+    initialValues?.expense_date || todayString(),
   );
+  const [note, setNote] = useState(initialValues?.note || "");
   const [paymentMode, setPaymentMode] = useState(
-    initialValues?.paymentMode || "",
+    initialValues?.payment_mode || "",
   );
   const [error, setError] = useState("");
 
   const canSubmit = useMemo(() => {
-    const parsedAmount = Number.parseFloat(amount);
+    const parsed = Number.parseFloat(amount);
     return (
-      Number.isFinite(parsedAmount) &&
-      parsedAmount > 0 &&
-      category &&
-      paymentMode &&
-      date
+      Number.isFinite(parsed) && parsed > 0 && category && paymentMode && date
     );
   }, [amount, category, paymentMode, date]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const parsedAmount = Number.parseFloat(amount);
+    const parsed = Number.parseFloat(amount);
 
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    if (!Number.isFinite(parsed) || parsed <= 0) {
       setError("Enter a valid amount greater than 0.");
       return;
     }
@@ -57,21 +73,19 @@ export default function ExpenseForm({
 
     setError("");
     onAdd({
-      amount: parsedAmount,
+      amount: parsed,
       category,
-      date,
-      description: description.trim(),
-      paymentMode,
+      expense_date: date,
+      note: note.trim(),
+      payment_mode: paymentMode,
     });
 
-    if (initialValues) {
-      return;
-    }
+    if (initialValues) return;
 
     setAmount("");
     setCategory("");
     setDate(todayString());
-    setDescription("");
+    setNote("");
     setPaymentMode("");
   };
 
@@ -87,7 +101,7 @@ export default function ExpenseForm({
             step="0.01"
             placeholder="0.00"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(e) => setAmount(e.target.value)}
             required
           />
         </label>
@@ -95,13 +109,13 @@ export default function ExpenseForm({
           <span>Category</span>
           <select
             value={category}
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={(e) => setCategory(e.target.value)}
             required
           >
             <option value="">Select category</option>
-            {categories.map((option) => (
-              <option key={option} value={option}>
-                {option}
+            {CATEGORIES.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
               </option>
             ))}
           </select>
@@ -111,7 +125,7 @@ export default function ExpenseForm({
           <input
             type="date"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={(e) => setDate(e.target.value)}
             required
           />
         </label>
@@ -119,25 +133,25 @@ export default function ExpenseForm({
           <span>Payment mode</span>
           <select
             value={paymentMode}
-            onChange={(event) => setPaymentMode(event.target.value)}
+            onChange={(e) => setPaymentMode(e.target.value)}
             required
           >
             <option value="">Select payment mode</option>
-            {paymentModes.map((option) => (
-              <option key={option} value={option}>
-                {option}
+            {PAYMENT_MODES.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
               </option>
             ))}
           </select>
         </label>
       </div>
       <label className="field field-full">
-        <span>Description</span>
+        <span>Note</span>
         <input
           type="text"
           placeholder="Add a note (optional)"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}

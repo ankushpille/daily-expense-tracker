@@ -1,3 +1,5 @@
+/* ── Layout ──────────────────────────────────────────────────── */
+
 .app {
   max-width: 1100px;
   margin: 0 auto;
@@ -6,6 +8,52 @@
   flex-direction: column;
   gap: 24px;
 }
+
+/* ── Top Bar (logged-in user) ────────────────────────────────── */
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(118, 80, 45, 0.12);
+  backdrop-filter: blur(8px);
+  animation: fade-up 0.5s ease-out;
+}
+
+.top-bar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3d2b1c, #6b4b32);
+  color: #fff6ec;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.user-email {
+  font-size: 0.9rem;
+  color: #4c3a2c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Hero ────────────────────────────────────────────────────── */
 
 .hero {
   display: grid;
@@ -55,6 +103,8 @@
   font-family: "Fraunces", serif;
 }
 
+/* ── Panels ──────────────────────────────────────────────────── */
+
 .panel {
   background: rgba(255, 255, 255, 0.82);
   border-radius: 20px;
@@ -77,6 +127,8 @@
   justify-content: space-between;
   gap: 12px;
 }
+
+/* ── Forms & Fields ──────────────────────────────────────────── */
 
 .form-grid,
 .filters {
@@ -123,6 +175,8 @@
   flex-wrap: wrap;
 }
 
+/* ── Buttons ─────────────────────────────────────────────────── */
+
 .primary-btn,
 .ghost-btn,
 .danger-btn {
@@ -131,6 +185,19 @@
   padding: 10px 18px;
   font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.primary-btn:hover,
+.ghost-btn:hover,
+.danger-btn:hover {
+  opacity: 0.85;
+}
+
+.primary-btn:active,
+.ghost-btn:active,
+.danger-btn:active {
+  transform: scale(0.97);
 }
 
 .primary-btn {
@@ -155,6 +222,23 @@
   color: #8b2e1c;
   border: 1px solid rgba(139, 46, 28, 0.3);
 }
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #7a4b2a;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.link-btn:hover {
+  color: #3d2b1c;
+}
+
+/* ── Expense Table ───────────────────────────────────────────── */
 
 .expense-table {
   display: grid;
@@ -227,6 +311,8 @@
   margin-left: 0;
 }
 
+/* ── Text helpers ────────────────────────────────────────────── */
+
 .muted {
   color: #6b5446;
   font-size: 0.9rem;
@@ -237,6 +323,20 @@
   color: #6b5446;
   font-style: italic;
 }
+
+.form-error {
+  margin: 0;
+  color: #9a2f20;
+  font-weight: 600;
+}
+
+.form-success {
+  margin: 0;
+  color: #1a6b3a;
+  font-weight: 600;
+}
+
+/* ── Summary ─────────────────────────────────────────────────── */
 
 .summary {
   background: rgba(255, 246, 235, 0.9);
@@ -258,11 +358,7 @@
   gap: 8px;
 }
 
-.form-error {
-  margin: 0;
-  color: #9a2f20;
-  font-weight: 600;
-}
+/* ── Report Table ────────────────────────────────────────────── */
 
 .report-table {
   display: grid;
@@ -290,6 +386,141 @@
   letter-spacing: 0.08em;
 }
 
+/* ── Auth Page ───────────────────────────────────────────────── */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 36px 32px;
+  box-shadow: 0 20px 60px rgba(74, 48, 23, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: float-in 0.7s ease-out;
+}
+
+.auth-header {
+  text-align: center;
+}
+
+.auth-header h1 {
+  font-family: "Fraunces", serif;
+  font-size: 1.8rem;
+  margin: 0 0 6px;
+}
+
+.auth-header .subtitle {
+  max-width: none;
+  text-align: center;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 12px 18px;
+  font-size: 1rem;
+}
+
+.auth-toggle {
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #6b5446;
+}
+
+/* ── Google Button ───────────────────────────────────────────── */
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(108, 78, 54, 0.2);
+  background: #fff;
+  color: #3e3127;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  font-family: inherit;
+}
+
+.google-btn:hover {
+  box-shadow: 0 4px 16px rgba(74, 48, 23, 0.12);
+}
+
+.google-btn:active {
+  transform: scale(0.97);
+}
+
+.google-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Auth Divider ────────────────────────────────────────────── */
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #a89280;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(108, 78, 54, 0.2);
+}
+
+/* ── Loading Screen ──────────────────────────────────────────── */
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 50vh;
+  color: #6b5446;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(108, 78, 54, 0.15);
+  border-top-color: #7a4b2a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Animations ──────────────────────────────────────────────── */
+
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -311,6 +542,14 @@
     transform: translateY(0);
   }
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
 
 @media (max-width: 860px) {
   .expense-row {
@@ -341,5 +580,10 @@
   .form-actions .ghost-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    gap: 10px;
   }
 }

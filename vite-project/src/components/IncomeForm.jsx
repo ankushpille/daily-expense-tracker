@@ -2,7 +2,17 @@ import { useMemo, useState } from "react";
 
 const todayString = () => new Date().toISOString().split("T")[0];
 
-export default function IncomeForm({ onAdd, incomeSources }) {
+const INCOME_SOURCES = [
+  "Salary",
+  "Freelance",
+  "Business",
+  "Investment",
+  "Gift",
+  "Refund",
+  "Other",
+];
+
+export default function IncomeForm({ onAdd }) {
   const [amount, setAmount] = useState("");
   const [source, setSource] = useState("");
   const [date, setDate] = useState(todayString());
@@ -10,15 +20,15 @@ export default function IncomeForm({ onAdd, incomeSources }) {
   const [error, setError] = useState("");
 
   const canSubmit = useMemo(() => {
-    const parsedAmount = Number.parseFloat(amount);
-    return Number.isFinite(parsedAmount) && parsedAmount > 0 && source && date;
+    const parsed = Number.parseFloat(amount);
+    return Number.isFinite(parsed) && parsed > 0 && source && date;
   }, [amount, source, date]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const parsedAmount = Number.parseFloat(amount);
+    const parsed = Number.parseFloat(amount);
 
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    if (!Number.isFinite(parsed) || parsed <= 0) {
       setError("Enter a valid amount greater than 0.");
       return;
     }
@@ -33,9 +43,9 @@ export default function IncomeForm({ onAdd, incomeSources }) {
 
     setError("");
     onAdd({
-      amount: parsedAmount,
+      amount: parsed,
       source,
-      date,
+      income_date: date,
       note: note.trim(),
     });
 
@@ -57,7 +67,7 @@ export default function IncomeForm({ onAdd, incomeSources }) {
             step="0.01"
             placeholder="0.00"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(e) => setAmount(e.target.value)}
             required
           />
         </label>
@@ -65,13 +75,13 @@ export default function IncomeForm({ onAdd, incomeSources }) {
           <span>Source</span>
           <select
             value={source}
-            onChange={(event) => setSource(event.target.value)}
+            onChange={(e) => setSource(e.target.value)}
             required
           >
             <option value="">Select source</option>
-            {incomeSources.map((option) => (
-              <option key={option} value={option}>
-                {option}
+            {INCOME_SOURCES.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
               </option>
             ))}
           </select>
@@ -81,7 +91,7 @@ export default function IncomeForm({ onAdd, incomeSources }) {
           <input
             type="date"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={(e) => setDate(e.target.value)}
             required
           />
         </label>
@@ -92,7 +102,7 @@ export default function IncomeForm({ onAdd, incomeSources }) {
           type="text"
           placeholder="Add a note (optional)"
           value={note}
-          onChange={(event) => setNote(event.target.value)}
+          onChange={(e) => setNote(e.target.value)}
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
