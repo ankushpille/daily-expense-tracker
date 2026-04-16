@@ -182,34 +182,30 @@ export default function ExpensePage() {
         <p className="muted">Track and analyze your spending</p>
       </div>
 
-      {/* ── Add / Edit Expense ───────────────────────────── */}
+      {/* ── Add Expense ──────────────────────────────────── */}
       <section className="panel">
-        <h3>{expenseBeingEdited ? "Edit Expense" : "Add Expense"}</h3>
-        <ExpenseForm
-          key={expenseBeingEdited?.id || "new"}
-          onAdd={expenseBeingEdited ? handleUpdateExpense : handleAddExpense}
-          initialValues={expenseBeingEdited}
-          submitLabel={expenseBeingEdited ? "Update Expense" : "Add Expense"}
-          onCancel={
-            expenseBeingEdited ? () => setExpenseBeingEdited(null) : undefined
-          }
-        />
+        <h3>Add Expense</h3>
+        <ExpenseForm onAdd={handleAddExpense} />
       </section>
 
       {/* ── Quick Stats ──────────────────────────────────── */}
-      <div className="dashboard-grid two-col">
-        <div className="stat-card stat-expense">
-          <span className="stat-emoji">💸</span>
-          <div className="stat-info">
-            <span className="stat-label">Total Expenses</span>
-            <span className="stat-value">{formatCurrency(totalAllTime)}</span>
+      <div className="dashboard-grid stats-grid">
+        <div className="stat-card stat-expense premium">
+          <div className="stat-card-inner">
+            <span className="stat-emoji">💸</span>
+            <div className="stat-info">
+              <span className="stat-label">Total Expenses</span>
+              <span className="stat-value">{formatCurrency(totalAllTime)}</span>
+            </div>
           </div>
         </div>
-        <div className="stat-card">
-          <span className="stat-emoji">🔍</span>
-          <div className="stat-info">
-            <span className="stat-label">Filtered Total</span>
-            <span className="stat-value">{formatCurrency(totalFiltered)}</span>
+        <div className="stat-card premium">
+          <div className="stat-card-inner">
+            <span className="stat-emoji">🔍</span>
+            <div className="stat-info">
+              <span className="stat-label">Filtered Total</span>
+              <span className="stat-value">{formatCurrency(totalFiltered)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -237,7 +233,7 @@ export default function ExpensePage() {
       <section className="panel">
         <div className="panel-header">
           <h3>Filter &amp; Sort</h3>
-          <button className="ghost-btn" type="button" onClick={handleClearAll}>
+          <button className="danger-btn" type="button" onClick={handleClearAll} style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
             Clear all data
           </button>
         </div>
@@ -308,6 +304,7 @@ export default function ExpensePage() {
                     className="ghost-btn"
                     type="button"
                     onClick={() => toggleDateGroup(group.date)}
+                    style={{ padding: '6px 12px', fontSize: '0.85rem' }}
                   >
                     {expandedDates.has(group.date) ? "Hide" : "View details"}
                   </button>
@@ -371,6 +368,32 @@ export default function ExpensePage() {
           )}
         </div>
       </section>
+
+      {/* ── Edit Modal ───────────────────────────────────── */}
+      {expenseBeingEdited && (
+        <div className="modal-overlay" onClick={() => setExpenseBeingEdited(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Expense</h3>
+              <button
+                className="modal-close"
+                onClick={() => setExpenseBeingEdited(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <ExpenseForm
+                key={expenseBeingEdited.id}
+                onAdd={handleUpdateExpense}
+                initialValues={expenseBeingEdited}
+                submitLabel="Update Expense"
+                onCancel={() => setExpenseBeingEdited(null)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

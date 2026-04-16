@@ -1094,73 +1094,181 @@
   to { opacity: 1; }
 }
 
-@media (max-width: 600px) {
-  .panel {
-    padding: 18px;
-  }
+/* ── Dashboard Premium Updates ───────────────────────────────── */
 
-  .primary-btn,
-  .form-actions .ghost-btn {
-    width: 100%;
-    justify-content: center;
-  }
+.dashboard-page .stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-/* ── Modals ──────────────────────────────────────────────────── */
+.stat-card.premium {
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  background: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+.stat-card.premium:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.stat-card-inner {
+  padding: 24px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-  animation: fade-in 0.2s ease-out;
+  gap: 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(255,250,240,1) 100%);
 }
 
-.modal {
-  background: #fffaf3;
-  width: 100%;
-  max-width: 500px;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
+.stat-card.stat-income .stat-emoji { background: rgba(22, 100, 52, 0.1); }
+.stat-card.stat-expense .stat-emoji { background: rgba(154, 47, 32, 0.1); }
+.stat-card.stat-savings .stat-emoji { background: rgba(196, 122, 58, 0.1); }
+.stat-card.stat-alerts .stat-emoji { background: rgba(107, 84, 70, 0.1); }
+
+.dashboard-main-secondary {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.dashboard-main-content {
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
+  gap: 24px;
 }
 
-.modal-header {
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 88px;
+}
+
+.analytics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.chart-panel {
+  padding: 20px;
+}
+
+.chart-container {
+  min-height: 260px;
+  margin-top: 16px;
+}
+
+/* Alert Sidebar Modules */
+.alert-panel {
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.alert-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(118, 80, 45, 0.12);
+  margin-bottom: 16px;
 }
 
-.modal-header h3 {
+.alert-header h3 {
+  font-size: 1.1rem;
   margin: 0;
-  font-size: 1.2rem;
-  color: #3e3127;
 }
 
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
+.alert-count {
+  background: rgba(0,0,0,0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.alert-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alert-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Colors */
+.caution { background: #fffbeb; color: #92400e; }
+.caution .badge { background: #fef3c7; color: #92400e; }
+
+.critical { background: #fef2f2; color: #991b1b; }
+.critical .badge { background: #fee2e2; color: #991b1b; }
+
+.info { background: #f0f9ff; color: #075985; }
+.info .badge { background: #e0f2fe; color: #075985; }
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 12px;
+  border: 1px solid rgba(118, 80, 45, 0.15);
+  background: white;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
-  color: #a89888;
-  padding: 4px;
-  line-height: 1;
+  transition: all 0.2s;
+  color: #3d2b1c;
 }
 
-.modal-close:hover {
-  color: #3e3127;
+.action-btn:hover {
+  background: #3d2b1c;
+  color: white;
 }
 
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
+/* Responsive Overrides for Split Layout */
+@media (max-width: 1024px) {
+  .dashboard-main-secondary {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-sidebar {
+    position: static;
+  }
+
+  .analytics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal {
+    max-height: 85vh;
+  }
 }

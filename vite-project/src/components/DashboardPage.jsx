@@ -9,6 +9,11 @@ import {
   categorizeReminders,
   monthLabel,
 } from "../utils/helpers";
+import {
+  MonthlyTrendChart,
+  CategoryPieChart,
+  SavingsLineChart,
+} from "./DashboardCharts";
 
 export default function DashboardPage() {
   const [income, setIncome] = useState([]);
@@ -48,13 +53,14 @@ export default function DashboardPage() {
     () => expenses.reduce((s, e) => s + Number(e.amount), 0),
     [expenses],
   );
+  const netSavings = totalIncome - totalExpenses;
 
   const recurringStatus = useMemo(
     () => getRecurringStatus(recurring, income),
     [recurring, income],
   );
   const pendingIncome = recurringStatus.filter((s) => !s.received);
-  const totalPending = pendingIncome.reduce(
+  const totalPendingAmount = pendingIncome.reduce(
     (s, r) => s + Number(r.expected_amount),
     0,
   );
@@ -64,7 +70,7 @@ export default function DashboardPage() {
     [reminders],
   );
 
-  // ── Insights ────────────────────────────────────────────────
+  // ── Aggregated Data for Charts ──────────────────────────────
   const categoryTotals = useMemo(() => {
     const t = {};
     expenses.forEach((e) => {
@@ -73,36 +79,11 @@ export default function DashboardPage() {
     return t;
   }, [expenses]);
 
-  const topCategory = useMemo(() => {
-    let top = { name: "—", amount: 0 };
-    Object.entries(categoryTotals).forEach(([n, a]) => {
-      if (a > top.amount) top = { name: n, amount: a };
-    });
-    return top;
-  }, [categoryTotals]);
-
-  const incomeSourceTotals = useMemo(() => {
-    const t = {};
-    income.forEach((e) => {
-      t[e.source] = (t[e.source] || 0) + Number(e.amount);
-    });
-    return t;
-  }, [income]);
-
-  const topSource = useMemo(() => {
-    let top = { name: "—", amount: 0 };
-    Object.entries(incomeSourceTotals).forEach(([n, a]) => {
-      if (a > top.amount) top = { name: n, amount: a };
-    });
-    return top;
-  }, [incomeSourceTotals]);
-
-  // ── Monthly reports ─────────────────────────────────────────
   const monthlyReports = useMemo(() => {
     const monthSet = new Set();
     expenses.forEach((e) => monthSet.add(e.expense_date.slice(0, 7)));
     income.forEach((e) => monthSet.add(e.income_date.slice(0, 7)));
-    const months = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
+    const months = Array.from(monthSet).sort((a, b) => a.localeCompare(b)); // ASC for trend chart
 
     return months.map((mk) => {
       const expInMonth = expenses.filter((e) =>
@@ -112,7 +93,7 @@ export default function DashboardPage() {
       const totalExp = expInMonth.reduce((s, e) => s + Number(e.amount), 0);
       const totalInc = incInMonth.reduce((s, e) => s + Number(e.amount), 0);
       return {
-        monthKey: mk,
+        monthKey: monthLabel(mk),
         totalExpense: totalExp,
         totalIncome: totalInc,
         savings: totalInc - totalExp,
@@ -120,203 +101,202 @@ export default function DashboardPage() {
     });
   }, [expenses, income]);
 
-  // ── Render ──────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="page-loading">
         <div className="spinner" />
-        <p>Loading dashboard…</p>
+        <p>Analyzing your finances...</p>
       </div>
     );
   }
 
   return (
-    <div className="page">
+    <div className="page dashboard-page">
       <div className="page-header">
-        <h1>Dashboard</h1>
-        <p className="muted">Your financial overview at a glance</p>
+        <h1>Financial Overview</h1>
+        <p className="muted">Track, analyze and optimize your spending</p>
       </div>
 
       {/* ── Summary Cards ─────────────────────────────────── */}
-      <div className="dashboard-grid">
-        <div className="stat-card stat-income">
-          <span className="stat-emoji">💰</span>
-          <div className="stat-info">
-            <span className="stat-label">Total Income</span>
-            <span className="stat-value">{formatCurrency(totalIncome)}</span>
-          </div>
-        </div>
-        <div className="stat-card stat-expense">
-          <span className="stat-emoji">💸</span>
-          <div className="stat-info">
-            <span className="stat-label">Total Expenses</span>
-            <span className="stat-value">{formatCurrency(totalExpenses)}</span>
-          </div>
-        </div>
-        <div className="stat-card stat-pending">
-          <span className="stat-emoji">⏳</span>
-          <div className="stat-info">
-            <span className="stat-label">Pending Income</span>
-            <span className="stat-value">
-              {pendingIncome.length} source
-              {pendingIncome.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-        <div className="stat-card stat-due">
-          <span className="stat-emoji">🔔</span>
-          <div className="stat-info">
-            <span className="stat-label">Due Alerts</span>
-            <span className="stat-value">
-              {overdue.length + upcoming.length}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Net Savings ───────────────────────────────────── */}
-      <div className="panel">
-        <h3>Net Savings</h3>
-        <p
-          className={`savings-amount ${totalIncome - totalExpenses >= 0 ? "positive" : "negative"}`}
-        >
-          {formatCurrency(totalIncome - totalExpenses)}
-        </p>
-      </div>
-
-      {/* ── Pending Income Alerts ─────────────────────────── */}
-      {pendingIncome.length > 0 && (
-        <div className="panel alert-panel warning-bg">
-          <h3>⚠️ Pending Recurring Income</h3>
-          <div className="alert-list">
-            {pendingIncome.map((src) => (
-              <div key={src.id} className="alert-card warning">
-                <div className="alert-card-body">
-                  <strong>{src.source_name}</strong>
-                  <span>
-                    {formatCurrency(src.expected_amount)} pending (due day:{" "}
-                    {src.due_day})
-                  </span>
-                </div>
-                <span className="badge badge-warning">Pending</span>
-              </div>
-            ))}
-          </div>
-          <p className="muted" style={{ marginTop: 8 }}>
-            Total pending: {formatCurrency(totalPending)}
-          </p>
-        </div>
-      )}
-
-      {/* ── Overdue Reminders ─────────────────────────────── */}
-      {overdue.length > 0 && (
-        <div className="panel alert-panel danger-bg">
-          <h3>🚨 Overdue Payments</h3>
-          <div className="alert-list">
-            {overdue.map((r) => (
-              <div key={r.id} className="alert-card danger">
-                <div className="alert-card-body">
-                  <strong>{r.title}</strong>
-                  <span>
-                    {formatCurrency(r.amount)} — Due: {r.due_date}
-                  </span>
-                </div>
-                <span className="badge badge-danger">Overdue</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Upcoming Reminders ────────────────────────────── */}
-      {upcoming.length > 0 && (
-        <div className="panel alert-panel upcoming-bg">
-          <h3>📅 Upcoming Dues (Next 7 Days)</h3>
-          <div className="alert-list">
-            {upcoming.map((r) => (
-              <div key={r.id} className="alert-card upcoming">
-                <div className="alert-card-body">
-                  <strong>{r.title}</strong>
-                  <span>
-                    {formatCurrency(r.amount)} — Due: {r.due_date}
-                  </span>
-                </div>
-                <span className="badge badge-upcoming">Upcoming</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Insights ──────────────────────────────────────── */}
-      <section className="panel summary">
-        <h3>Insights</h3>
-        <div className="summary-grid">
-          <div className="summary-card">
-            <span>Top spending category</span>
-            <strong>
-              {topCategory.name !== "—"
-                ? `${topCategory.name} (${formatCurrency(topCategory.amount)})`
-                : "—"}
-            </strong>
-          </div>
-          <div className="summary-card">
-            <span>Top income source</span>
-            <strong>
-              {topSource.name !== "—"
-                ? `${topSource.name} (${formatCurrency(topSource.amount)})`
-                : "—"}
-            </strong>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Monthly Report ────────────────────────────────── */}
-      <section className="panel">
-        <h3>Monthly Summary</h3>
-        {monthlyReports.length === 0 ? (
-          <p className="empty-state">
-            Add income and expenses to build monthly reports.
-          </p>
-        ) : (
-          <div className="data-table">
-            <div className="data-row data-head four-col">
-              <span>Month</span>
-              <span className="align-right">Income</span>
-              <span className="align-right">Expenses</span>
-              <span className="align-right">Savings</span>
+      <div className="dashboard-grid stats-grid">
+        <div className="stat-card stat-income premium">
+          <div className="stat-card-inner">
+            <span className="stat-emoji">💰</span>
+            <div className="stat-info">
+              <span className="stat-label">Total Income</span>
+              <span className="stat-value">{formatCurrency(totalIncome)}</span>
             </div>
-            {monthlyReports.map((r) => (
-              <div className="data-row four-col" key={r.monthKey}>
-                <span>{monthLabel(r.monthKey)}</span>
-                <span className="align-right amount-positive">
-                  {formatCurrency(r.totalIncome)}
-                </span>
-                <span className="align-right amount-negative">
-                  {formatCurrency(r.totalExpense)}
-                </span>
-                <span
-                  className={`align-right ${r.savings >= 0 ? "amount-positive" : "amount-negative"}`}
-                >
-                  {formatCurrency(r.savings)}
-                </span>
-              </div>
-            ))}
           </div>
-        )}
-      </section>
+        </div>
+        <div className="stat-card stat-expense premium">
+          <div className="stat-card-inner">
+            <span className="stat-emoji">💸</span>
+            <div className="stat-info">
+              <span className="stat-label">Total Expenses</span>
+              <span className="stat-value">{formatCurrency(totalExpenses)}</span>
+            </div>
+          </div>
+        </div>
+        <div className="stat-card stat-savings premium">
+          <div className="stat-card-inner">
+            <span className="stat-emoji">{netSavings >= 0 ? "📈" : "📉"}</span>
+            <div className="stat-info">
+              <span className="stat-label">Net Savings</span>
+              <span className={`stat-value ${netSavings >= 0 ? "positive" : "negative"}`}>
+                {formatCurrency(netSavings)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="stat-card stat-alerts premium">
+          <div className="stat-card-inner">
+            <span className="stat-emoji">⚠️</span>
+            <div className="stat-info">
+              <span className="stat-label">Pending / Dues</span>
+              <span className="stat-value">
+                {pendingIncome.length + overdue.length + upcoming.length}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* ── Empty state ───────────────────────────────────── */}
-      {income.length === 0 &&
-        expenses.length === 0 &&
-        recurring.length === 0 && (
-          <div className="panel" style={{ textAlign: "center" }}>
-            <p className="empty-state">
-              Welcome! Start by adding income or expenses from the sidebar
-              menu.
-            </p>
+      <div className="dashboard-main-secondary">
+        {/* ── Visual Analytics ─────────────────────────────── */}
+        <div className="dashboard-main-content">
+          <section className="panel chart-panel">
+            <div className="panel-header">
+              <h3>Income vs Expenses Trend</h3>
+            </div>
+            <div className="chart-container">
+              <MonthlyTrendChart data={monthlyReports} />
+            </div>
+          </section>
+
+          <div className="analytics-row">
+            <section className="panel chart-panel">
+              <div className="panel-header">
+                <h3>Expense Distribution</h3>
+              </div>
+              <div className="chart-container">
+                <CategoryPieChart data={categoryTotals} />
+              </div>
+            </section>
+            <section className="panel chart-panel">
+              <div className="panel-header">
+                <h3>Savings Trend</h3>
+              </div>
+              <div className="chart-container">
+                <SavingsLineChart data={monthlyReports} />
+              </div>
+            </section>
           </div>
-        )}
+
+          <section className="panel">
+            <h3>Monthly Records</h3>
+            {monthlyReports.length === 0 ? (
+              <p className="empty-state">No data available for reports.</p>
+            ) : (
+              <div className="data-table dashboard-table">
+                <div className="data-row data-head four-col">
+                  <span>Month</span>
+                  <span className="align-right">Income</span>
+                  <span className="align-right">Expenses</span>
+                  <span className="align-right">Savings</span>
+                </div>
+                {[...monthlyReports].reverse().map((r) => (
+                  <div className="data-row four-col" key={r.monthKey}>
+                    <span>{r.monthKey}</span>
+                    <span className="align-right amount-positive">{formatCurrency(r.totalIncome)}</span>
+                    <span className="align-right amount-negative">{formatCurrency(r.totalExpense)}</span>
+                    <span className={`align-right ${r.savings >= 0 ? "amount-positive" : "amount-negative"}`}>
+                      {formatCurrency(r.savings)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* ── Alerts & Notifications Sidebar ────────────────── */}
+        <div className="dashboard-sidebar">
+          {/* Pending Income */}
+          {pendingIncome.length > 0 && (
+            <div className="panel alert-panel caution">
+              <div className="alert-header">
+                <h3>Pending Income</h3>
+                <span className="alert-count">{pendingIncome.length}</span>
+              </div>
+              <div className="alert-list">
+                {pendingIncome.map((src) => (
+                  <div key={src.id} className="alert-item">
+                    <div className="alert-item-info">
+                      <strong>{src.source_name}</strong>
+                      <span>{formatCurrency(src.expected_amount)}</span>
+                    </div>
+                    <span className="badge caution">Due day {src.due_day}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="alert-footer">
+                <span>Total Expected: {formatCurrency(totalPendingAmount)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Overdue */}
+          {overdue.length > 0 && (
+            <div className="panel alert-panel critical">
+              <div className="alert-header">
+                <h3>Overdue Payments</h3>
+                <span className="alert-count">{overdue.length}</span>
+              </div>
+              <div className="alert-list">
+                {overdue.map((r) => (
+                  <div key={r.id} className="alert-item">
+                    <div className="alert-item-info">
+                      <strong>{r.title}</strong>
+                      <span>{formatCurrency(r.amount)}</span>
+                    </div>
+                    <span className="badge critical">{r.due_date}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming */}
+          {upcoming.length > 0 && (
+            <div className="panel alert-panel info">
+              <div className="alert-header">
+                <h3>Upcoming Dues</h3>
+                <span className="alert-count">{upcoming.length}</span>
+              </div>
+              <div className="alert-list">
+                {upcoming.map((r) => (
+                  <div key={r.id} className="alert-item">
+                    <div className="alert-item-info">
+                      <strong>{r.title}</strong>
+                      <span>{formatCurrency(r.amount)}</span>
+                    </div>
+                    <span className="badge info">{r.due_date}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Actions Placeholder */}
+          <section className="panel quick-actions">
+            <h3>Quick Actions</h3>
+            <div className="action-buttons">
+              <button className="action-btn" onClick={() => window.location.hash = "#expenses"}>Add Expense</button>
+              <button className="action-btn" onClick={() => window.location.hash = "#income"}>Add Income</button>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
