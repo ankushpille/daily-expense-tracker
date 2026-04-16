@@ -46,6 +46,21 @@ export async function addIncome(entry) {
 }
 
 /**
+ * Update an existing income entry by id.
+ */
+export async function updateIncome(id, updates) {
+  const { data, error } = await supabase
+    .from("income_entries")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
  * Delete a single income entry by id.
  */
 export async function deleteIncome(id) {

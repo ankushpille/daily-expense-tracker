@@ -456,19 +456,6 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className="app">
-      {/* ── Top Bar ─────────────────────────────────────────── */}
-      <div className="top-bar">
-        <div className="top-bar-user">
-          <span className="user-avatar">
-            {(user.email || "U")[0].toUpperCase()}
-          </span>
-          <span className="user-email">{user.email}</span>
-        </div>
-        <button id="logout-btn" className="ghost-btn" type="button" onClick={onLogout}>
-          Logout
-        </button>
-      </div>
-
       {/* ── Hero ────────────────────────────────────────────── */}
       <header className="hero">
         <div>

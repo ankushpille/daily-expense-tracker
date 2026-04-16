@@ -48,7 +48,7 @@ export async function addExpense(expense) {
 }
 
 /**
- * Update an existing expense by id.
+ * Update an existing expense entry by id.
  */
 export async function updateExpense(id, updates) {
   const { data, error } = await supabase

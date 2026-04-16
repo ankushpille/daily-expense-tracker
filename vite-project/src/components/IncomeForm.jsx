@@ -9,14 +9,25 @@ const INCOME_SOURCES = [
   "Investment",
   "Gift",
   "Refund",
+  "Rental",
+  "Loan Interest",
   "Other",
 ];
 
-export default function IncomeForm({ onAdd }) {
-  const [amount, setAmount] = useState("");
-  const [source, setSource] = useState("");
-  const [date, setDate] = useState(todayString());
-  const [note, setNote] = useState("");
+export default function IncomeForm({
+  onAdd,
+  initialValues,
+  submitLabel = "Add income",
+  onCancel,
+}) {
+  const [amount, setAmount] = useState(
+    initialValues?.amount ? String(initialValues.amount) : "",
+  );
+  const [source, setSource] = useState(initialValues?.source || "");
+  const [date, setDate] = useState(
+    initialValues?.income_date || todayString(),
+  );
+  const [note, setNote] = useState(initialValues?.note || "");
   const [error, setError] = useState("");
 
   const canSubmit = useMemo(() => {
@@ -48,6 +59,9 @@ export default function IncomeForm({ onAdd }) {
       income_date: date,
       note: note.trim(),
     });
+
+    // Don't reset form when editing
+    if (initialValues) return;
 
     setAmount("");
     setSource("");
@@ -106,9 +120,16 @@ export default function IncomeForm({ onAdd }) {
         />
       </label>
       {error ? <p className="form-error">{error}</p> : null}
-      <button className="primary-btn" type="submit" disabled={!canSubmit}>
-        Add income
-      </button>
+      <div className="form-actions">
+        <button className="primary-btn" type="submit" disabled={!canSubmit}>
+          {submitLabel}
+        </button>
+        {onCancel && (
+          <button className="ghost-btn" type="button" onClick={onCancel}>
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }
